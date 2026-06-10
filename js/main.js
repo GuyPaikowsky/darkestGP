@@ -1,5 +1,8 @@
 // ── DARKEST GRAND PRIX — run orchestration ───────────────────────────────────
-import { HEROES, ENCOUNTERS, BOSS_ENCOUNTER, MYSTERY_EVENTS, PIT_OPTIONS, NARRATOR, ROUTE_NODES } from './data.js';
+import {
+  HEROES, ENCOUNTERS, ELITE_ENCOUNTERS, BOSS_ENCOUNTER, MYSTERY_EVENTS,
+  PIT_OPTIONS, NARRATOR, ROUTE_NODES, TRINKETS, CORNERS,
+} from './data.js';
 import { initOverworld, setSpeed } from './overworld.js';
 import { initBattle, startBattle } from './battle.js';
 import { sfx, toggleMute } from './sfx.js';
@@ -14,6 +17,7 @@ let party = [];
 let leg = 1;
 let usedEncounters = [];
 let usedEvents = [];
+let usedCorners = [];
 let runActive = false;
 
 // modal buttons must fire exactly once, no matter how excitedly the user clicks
@@ -37,6 +41,22 @@ const LEG_NAMES = [
   'THE FINAL STINT',
 ];
 
+// ── checkered wipe transition ────────────────────────────────────────────────
+async function wipe(mid) {
+  const w = $('#wipe');
+  w.classList.remove('hidden', 'leave');
+  void w.offsetWidth;
+  w.classList.add('cover');
+  sfx('rev');
+  await wait(620);
+  if (mid) await mid();
+  w.classList.remove('cover');
+  w.classList.add('leave');
+  await wait(620);
+  w.classList.add('hidden');
+  w.classList.remove('leave');
+}
+
 // ── narrator ─────────────────────────────────────────────────────────────────
 let narrTimer = null;
 function narrate(text) {
@@ -53,10 +73,10 @@ function narrate(text) {
 // ── HUD ──────────────────────────────────────────────────────────────────────
 function renderHud() {
   $('#party-strip').innerHTML = party.map((h) => `
-    <div class="hud-unit ${h.hp <= 0 ? 'dnf' : ''} ${h.tilted ? 'tilted' : ''}">
+    <div class="hud-unit ${h.hp <= 0 ? 'dnf' : ''} ${h.affliction ? 'tilted' : ''}">
       <div class="hud-portrait">${h.portrait}</div>
       <div class="hud-bars">
-        <div class="hud-name">${h.short}</div>
+        <div class="hud-name">${h.short}${h.trinket ? ' <span class="hud-trinket" title="' + h.trinket.name + '">◈</span>' : ''}</div>
         <div class="bar hp mini"><div style="width:${Math.max(0, h.hp / h.maxHp * 100)}%"></div></div>
         <div class="bar tilt mini"><div style="width:${Math.min(100, h.tilt)}%"></div></div>
       </div>
@@ -68,8 +88,8 @@ function renderHud() {
 // ── run flow ─────────────────────────────────────────────────────────────────
 function freshParty() {
   return HEROES.map((h) => ({
-    ...h, uid: h.id, hp: h.maxHp, tilt: rint(0, 15), tilted: false, announced: false,
-    isEnemy: false, statuses: [],
+    ...h, uid: h.id, hp: h.maxHp, tilt: rint(0, 15), affliction: null, flow: false,
+    announced: false, isEnemy: false, statuses: [], trinket: null, cds: {},
   }));
 }
 
@@ -95,6 +115,7 @@ async function beginRun() {
   leg = 1;
   usedEncounters = [];
   usedEvents = [];
+  usedCorners = [];
   renderHud();
   narrate(pick(NARRATOR.intro));
   sfx('rev');
@@ -116,7 +137,8 @@ async function nextLeg() {
 
 function routeOptionsForLeg() {
   if (leg === TOTAL_LEGS) return ['boss'];
-  const pool = ['battle', 'battle', 'mystery', 'pit'];
+  const pool = ['battle', 'battle', 'mystery', 'pit', 'corner'];
+  if (leg >= 4) pool.push('elite');
   const a = pick(pool);
   let b = pick(pool);
   while (b === a) b = pick(pool);
@@ -149,24 +171,86 @@ function presentRoute() {
 }
 
 async function resolveNode(type) {
-  if (type === 'battle') {
-    let enc = pick(ENCOUNTERS.filter((e) => !usedEncounters.includes(e.name)));
-    if (!enc) enc = pick(ENCOUNTERS);
-    usedEncounters.push(enc.name);
-    const result = await startBattle(enc, party);
+  if (type === 'battle' || type === 'elite' || type === 'boss') {
+    let enc;
+    if (type === 'boss') enc = BOSS_ENCOUNTER;
+    else if (type === 'elite') enc = pick(ELITE_ENCOUNTERS);
+    else {
+      enc = pick(ENCOUNTERS.filter((e) => !usedEncounters.includes(e.name))) ?? pick(ENCOUNTERS);
+      usedEncounters.push(enc.name);
+    }
+
+    let result;
+    await wipe(async () => { result = startBattle(enc, party); });
+    result = await result;
     renderHud();
     if (result === 'lose') return endRun(false);
+    if (type === 'boss') return endRun(true);
+
+    await offerTrinket(`The wreckage of ${enc.name.toLowerCase()} yields treasure.`);
     leg++;
     nextLeg();
-  } else if (type === 'boss') {
-    const result = await startBattle(BOSS_ENCOUNTER, party);
-    renderHud();
-    return endRun(result === 'win');
   } else if (type === 'pit') {
     showPit();
+  } else if (type === 'corner') {
+    showCorner();
   } else {
     showMystery();
   }
+}
+
+// ── trinkets ─────────────────────────────────────────────────────────────────
+function equipTrinket(hero, trinket) {
+  if (hero.trinket?.fx.maxHp) hero.maxHp -= hero.trinket.fx.maxHp;
+  hero.trinket = trinket;
+  if (trinket.fx.maxHp) hero.maxHp += trinket.fx.maxHp;
+  hero.maxHp = Math.max(10, hero.maxHp);
+  hero.hp = Math.max(1, Math.min(hero.hp, hero.maxHp));
+}
+
+function offerTrinket(reason) {
+  return new Promise((resolve) => {
+    const equipped = party.map((h) => h.trinket?.id).filter(Boolean);
+    const pool = TRINKETS.filter((t) => !equipped.includes(t.id));
+    if (pool.length === 0) return resolve();
+    const offers = [...pool].sort(() => Math.random() - 0.5).slice(0, 2);
+
+    $('#event-title').textContent = 'Spoils of the Road';
+    $('#event-text').textContent = reason + ' Claim one cursed artifact:';
+    $('#event-options').innerHTML = offers.map((tr, i) =>
+      `<button class="event-btn trinket" data-i="${i}"><b>◈ ${tr.name}</b><small>${tr.desc}</small></button>`).join('')
+      + `<button class="event-btn" data-i="-1"><b>Leave them</b><small>Cowardice, but tidy.</small></button>`;
+    $('#event-modal').classList.remove('hidden');
+
+    armOnce($('#event-options'), (btn) => {
+      sfx('click');
+      const i = +btn.dataset.i;
+      if (i < 0) {
+        $('#event-modal').classList.add('hidden');
+        narrate('The trinkets sink back into the gravel, muttering.');
+        return resolve();
+      }
+      pickTrinketHolder(offers[i], resolve);
+    });
+  });
+}
+
+function pickTrinketHolder(trinket, resolve) {
+  const alive = party.filter((h) => h.hp > 0);
+  $('#event-title').textContent = `Who carries ${trinket.name}?`;
+  $('#event-text').textContent = trinket.desc;
+  $('#event-options').innerHTML = alive.map((h, i) =>
+    `<button class="event-btn" data-i="${i}"><b>${h.short}</b><small>${h.trinket ? 'replaces ' + h.trinket.name : 'unencumbered'}</small></button>`).join('');
+
+  armOnce($('#event-options'), (btn) => {
+    sfx('heal');
+    const hero = alive[+btn.dataset.i];
+    equipTrinket(hero, trinket);
+    $('#event-modal').classList.add('hidden');
+    narrate(`${hero.short} pockets ${trinket.name}. It hums approvingly.`);
+    renderHud();
+    resolve();
+  });
 }
 
 // ── pit stop ─────────────────────────────────────────────────────────────────
@@ -185,7 +269,7 @@ function showPit() {
       if (eff.healAll) h.hp = Math.min(h.maxHp, h.hp + rint(...eff.healAll));
       if (eff.tiltAll) h.tilt = Math.max(0, Math.min(100, h.tilt + eff.tiltAll));
       if (eff.buff) h.statuses.push({ id: eff.buff });
-      if (h.tilt <= 45) h.tilted = false;
+      if (h.tilt < 30) { h.affliction = null; h.flow = false; }
     }
     $('#event-modal').classList.add('hidden');
     narrate('Rested. Repaired. Re-sponsored. The road calls again.');
@@ -195,10 +279,35 @@ function showPit() {
   });
 }
 
+// ── corner challenges ────────────────────────────────────────────────────────
+function showCorner() {
+  const corner = pick(CORNERS.filter((c) => !usedCorners.includes(c.name))) ?? pick(CORNERS);
+  usedCorners.push(corner.name);
+
+  $('#event-title').textContent = corner.name;
+  $('#event-text').textContent = corner.intro;
+  $('#event-options').innerHTML = corner.choices.map((c, i) =>
+    `<button class="event-btn" data-i="${i}"><b>${c.label}</b><small>${c.desc}</small></button>`).join('');
+  $('#event-modal').classList.remove('hidden');
+
+  armOnce($('#event-options'), async (btn) => {
+    sfx('rev');
+    const res = corner.choices[+btn.dataset.i].resolve(Math.random);
+    $('#event-text').textContent = res.text;
+    $('#event-options').innerHTML = '';
+    applyEventResult(res);
+    renderHud();
+    await wait(4200);
+    $('#event-modal').classList.add('hidden');
+    if (res.trinket) await offerTrinket('The corner, satisfied, offers tribute.');
+    leg++;
+    nextLeg();
+  });
+}
+
 // ── mystery events ───────────────────────────────────────────────────────────
 function showMystery() {
-  let ev = pick(MYSTERY_EVENTS.filter((e) => !usedEvents.includes(e.title)));
-  if (!ev) ev = pick(MYSTERY_EVENTS);
+  const ev = pick(MYSTERY_EVENTS.filter((e) => !usedEvents.includes(e.title))) ?? pick(MYSTERY_EVENTS);
   usedEvents.push(ev.title);
 
   $('#event-title').textContent = ev.title;
@@ -229,8 +338,8 @@ function applyEventResult(res) {
     if (res.tiltAll) h.tilt = Math.max(0, Math.min(100, h.tilt + res.tiltAll));
     if (res.heroTilt && res.heroTilt[h.id] !== undefined)
       h.tilt = Math.max(0, Math.min(100, h.tilt + res.heroTilt[h.id]));
-    if (h.tilt >= 100) h.tilted = true;
-    if (h.tilt <= 45) h.tilted = false;
+    if (res.buffAll) h.statuses.push({ id: res.buffAll });
+    if (h.tilt < 30) { h.affliction = null; h.flow = false; }
   }
 }
 

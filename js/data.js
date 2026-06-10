@@ -26,7 +26,7 @@ export const HEROES = [
         target: 'enemy', dmg: [6, 10], tiltTarget: 8,
         barks: ['THAT is how we did it in MY day!', 'I had that corner. I ALWAYS have that corner.'] },
       { id: 'whine', name: 'Vintage Whine', desc: 'Complains beautifully. Heals own tilt −25, party −5.',
-        target: 'self', tiltSelf: -25, tiltParty: -5,
+        target: 'self', tiltSelf: -25, tiltParty: -5, cd: 1,
         barks: ['In 1997 the tyres were made of COURAGE.', 'The steering wheel had THREE buttons. Three!'] },
       { id: 'elbows', name: 'Elbows Out', desc: 'Defensive masterclass. 4–7 dmg, −10 own tilt.',
         target: 'enemy', dmg: [4, 7], tiltSelf: -10,
@@ -43,7 +43,7 @@ export const HEROES = [
     portrait: helmet('#1f7a4f', '#a8f0c0', '<path d="M40 8 l8 10 l-12 2 z" fill="#a8f0c0"/>'),
     abilities: [
       { id: 'yolo', name: 'YOLO Divebomb', desc: 'Sends it. 9–14 dmg, +18 tilt to self.',
-        target: 'enemy', dmg: [9, 14], tiltSelf: 18,
+        target: 'enemy', dmg: [9, 14], tiltSelf: 18, cd: 2,
         barks: ['LATE BRAKING IS A SOCIAL CONSTRUCT!', 'If in doubt, ABSOLUTELY send it!'] },
       { id: 'post', name: 'Post About It', desc: 'Engagement heals. −20 own tilt, −8 party tilt.',
         target: 'self', tiltSelf: -20, tiltParty: -8,
@@ -66,7 +66,7 @@ export const HEROES = [
         target: 'ally', heal: [7, 11],
         barks: ['Gerald fixes all. Gerald forgives nothing.', 'It is not broken. It is pre-fixed.'] },
       { id: 'ducttape', name: 'Duct Tape Ritual', desc: 'Heals all allies 3–5 HP. The tape demands faith.',
-        target: 'allAllies', heal: [3, 5],
+        target: 'allAllies', heal: [3, 5], cd: 2,
         barks: ['The grey roll provides.', 'Structural? It is now.'] },
       { id: 'wrench', name: 'Gerald, Airborne', desc: 'Throws Gerald. 7–10 dmg. Gerald returns. Somehow.',
         target: 'enemy', dmg: [7, 10],
@@ -83,13 +83,13 @@ export const HEROES = [
     portrait: helmet('#3a4a8a', '#cdd6f4', '<circle cx="50" cy="14" r="6" fill="none" stroke="#cdd6f4" stroke-width="2"/>'),
     abilities: [
       { id: 'boxbox', name: 'BOX BOX BOX!', desc: 'Inspires an ally: −20 tilt, +3 HP. Or confuses them. Same thing.',
-        target: 'ally', heal: [3, 3], tiltTargetAlly: -20,
+        target: 'ally', heal: [3, 3], tiltTargetAlly: -20, cd: 1,
         barks: ['Box. BOX. Confirm box?? BOX!', 'We are checking. We are... still checking.'] },
       { id: 'questionable', name: 'Questionable Strategy', desc: 'Wildcard: 2–14 dmg. The rhombus knows no fear.',
         target: 'enemy', dmg: [2, 14],
         barks: ['It worked in the simulation. Once.', 'Plan F. As in, F it.'] },
       { id: 'gantt', name: 'Aggressive Gantt Chart', desc: 'Hits all enemies 3–5 dmg with pure bureaucracy.',
-        target: 'allEnemies', dmg: [3, 5],
+        target: 'allEnemies', dmg: [3, 5], cd: 2,
         barks: ['Per the deliverables: SUFFER.', 'You have been scheduled for defeat.'] },
     ],
   },
@@ -140,6 +140,39 @@ export const ENEMIES = {
         barks: ['The dry line is a lie.'] },
     ],
   },
+  bluephantom: {
+    id: 'bluephantom', name: 'Blue Flag Phantom', maxHp: 18, spd: 8,
+    portrait: helmet('#1e3a6e', '#7fa8d9', '<path d="M30 6 l14 5 l-14 5 z" fill="#4a7fd9"/><circle cx="50" cy="40" r="26" fill="none" stroke="#7fa8d9" stroke-width="1.5" opacity="0.5" stroke-dasharray="4 4"/>'),
+    flavor: 'A translucent backmarker that died mid-apex in 1983. Still has not let anyone through.',
+    abilities: [
+      { name: 'Phase Through Apex', desc: '', target: 'hero', dmg: [5, 8], tiltTarget: 8,
+        barks: ['*spectral mirror-checking*', 'I see no flags. I see NOTHING.'] },
+      { name: 'Haunted Defending', desc: '', target: 'hero', dmg: [3, 5], tiltTarget: 16,
+        barks: ['This line was mine in LIFE. It is mine in DEATH.'] },
+    ],
+  },
+  undercut: {
+    id: 'undercut', name: 'The Undercut', maxHp: 26, spd: 7,
+    portrait: `<svg viewBox="0 0 100 100"><path d="M20 70 q30 -50 60 0 z" fill="#2a1a3a" stroke="#0d0808" stroke-width="3"/><circle cx="38" cy="58" r="5" fill="#b86aff"/><circle cx="62" cy="58" r="5" fill="#b86aff"/><path d="M30 80 h40" stroke="#b86aff" stroke-width="3" stroke-dasharray="6 4"/></svg>`,
+    flavor: 'A strategy made flesh. It pits while you sleep. It is always two seconds faster, somehow.',
+    abilities: [
+      { name: 'Invisible Pit Stop', desc: '', target: 'hero', dmg: [6, 9], tiltTarget: 10,
+        barks: ['You were ahead. Were.', '*smug strategy noises*'] },
+      { name: 'Track Position Theft', desc: '', target: 'allHeroes', dmg: [2, 5], tiltTarget: 9,
+        barks: ['Check the timing screens. Weep.'] },
+    ],
+  },
+  drstrain: {
+    id: 'drstrain', name: 'THE DRS TRAIN', maxHp: 44, spd: 5, elite: true,
+    portrait: `<svg viewBox="0 0 100 100"><rect x="8" y="50" width="26" height="16" rx="4" fill="#6e1e1e" stroke="#0d0808" stroke-width="2.5"/><rect x="37" y="50" width="26" height="16" rx="4" fill="#6e4a1e" stroke="#0d0808" stroke-width="2.5"/><rect x="66" y="50" width="26" height="16" rx="4" fill="#1e4a6e" stroke="#0d0808" stroke-width="2.5"/><path d="M10 44 h80" stroke="#e8e0c8" stroke-width="2" stroke-dasharray="5 5"/><text x="50" y="36" font-size="13" text-anchor="middle" fill="#e8e0c8" font-weight="bold">DRS</text></svg>`,
+    flavor: 'Five cars within one second of each other, fused by aerodynamics into a single vengeful organism.',
+    abilities: [
+      { name: 'Conga Line of Doom', desc: '', target: 'allHeroes', dmg: [3, 6], tiltTarget: 8,
+        barks: ['*synchronized rear wing noises*', 'NOBODY PASSES. NOBODY LEAVES.'] },
+      { name: 'Detection Point Ambush', desc: '', target: 'hero', dmg: [8, 12], tiltTarget: 12,
+        barks: ['Activated. Devastated.'] },
+    ],
+  },
   safetycar: {
     id: 'safetycar', name: 'THE SAFETY CAR', maxHp: 70, spd: 1, boss: true,
     portrait: `<svg viewBox="0 0 100 100"><rect x="14" y="46" width="72" height="26" rx="9" fill="#b8b8c0" stroke="#0d0808" stroke-width="3"/><path d="M28 48 l10 -16 h24 l10 16 z" fill="#9a9aa4" stroke="#0d0808" stroke-width="3"/><rect x="30" y="22" width="40" height="8" rx="4" fill="#e6a23c"/><circle cx="30" cy="74" r="9" fill="#1a1212" stroke="#0d0808" stroke-width="3"/><circle cx="70" cy="74" r="9" fill="#1a1212" stroke="#0d0808" stroke-width="3"/><text x="50" y="64" font-size="11" text-anchor="middle" fill="#222" font-weight="bold">SC</text></svg>`,
@@ -152,6 +185,19 @@ export const ENEMIES = {
       { name: 'Mercedes Pace', desc: '', target: 'hero', dmg: [8, 12], tiltTarget: 14,
         barks: ['I am driving FLAT OUT, Michael.', 'These tyres are like ice cubes. YOURS.'] },
     ],
+    phase2: {
+      name: 'VIRTUAL SAFETY CAR',
+      spd: 6,
+      healOnShift: 8,
+      banner: 'PHASE 2: IT GOES VIRTUAL',
+      bark: 'YOU CANNOT PASS WHAT YOU CANNOT SEE. VSC DEPLOYED.',
+      abilities: [
+        { name: 'Delta Enforcement', desc: '', target: 'allHeroes', dmg: [5, 8], tiltTarget: 11,
+          barks: ['POSITIVE DELTA OR PERISH.', 'Your sector times disgust me.'] },
+        { name: 'Phantom Restart', desc: '', target: 'hero', dmg: [9, 13], tiltTarget: 15,
+          barks: ['Restart in 3... 2... never.', 'GREEN FLAG. PSYCH.'] },
+      ],
+    },
   },
 };
 
@@ -162,9 +208,104 @@ export const ENCOUNTERS = [
   { name: 'Forecast: Doom, Clearing Later', enemies: ['weather'] },
   { name: 'Full Course Despair', enemies: ['steward', 'gremlin'] },
   { name: 'Rain and Paperwork', enemies: ['weather', 'steward'] },
+  { name: 'A Chill at the Detection Point', enemies: ['bluephantom', 'backmarker'] },
+  { name: 'Two Seconds Behind You', enemies: ['undercut'] },
+  { name: 'Strategy Made Manifest', enemies: ['undercut', 'bluephantom'] },
+];
+
+// later legs: nastier, shinier, more aerodynamically fused
+export const ELITE_ENCOUNTERS = [
+  { name: 'THE TRAIN HAS NO BRAKES', enemies: ['drstrain'], elite: true },
+  { name: 'PEAK STEWARDING HOURS', enemies: ['steward', 'steward', 'gremlin'], elite: true },
+  { name: 'THE UNDERCUT BRINGS FRIENDS', enemies: ['undercut', 'bluephantom', 'backmarker'], elite: true },
 ];
 
 export const BOSS_ENCOUNTER = { name: 'THE NEUTRALIZER OF JOY', enemies: ['safetycar', 'backmarker'] };
+
+export const TRINKETS = [
+  { id: 'cap97', name: '1997 Commemorative Cap', desc: '+20% damage. Smells of victory and mothballs.', fx: { dmg: 1.2 } },
+  { id: 'gravel', name: 'Slightly Haunted Gravel', desc: '+2 SPD. Whispers apex tips at night.', fx: { spd: 2 } },
+  { id: 'brian', name: "Gerald's Cousin Brian", desc: '+15% damage, −10% tilt gained. A very calming wrench.', fx: { dmg: 1.15, tiltGain: 0.9 } },
+  { id: 'expired', name: 'Expired Energy Drink', desc: '+3 SPD, +25% tilt gained. Legally a solvent.', fx: { spd: 3, tiltGain: 1.25 } },
+  { id: 'lugnut', name: 'The Lucky Lug Nut', desc: '+12% crit chance. The one that got away. It came back.', fx: { crit: 0.12 } },
+  { id: 'rulebook', name: 'FIA Rulebook (Annotated, Cursed)', desc: '−30% tilt gained. Marginalia in blood, mostly about track limits.', fx: { tiltGain: 0.7 } },
+  { id: 'champagne', name: 'Podium Champagne (Shaken Since 2009)', desc: '+25% damage, −5 max HP. It WILL go off.', fx: { dmg: 1.25, maxHp: -5 } },
+  { id: 'blanket', name: 'Emotional Support Tyre Blanket', desc: '+8 max HP. Warm. Forgiving. Slightly singed.', fx: { maxHp: 8 } },
+];
+
+export const AFFLICTIONS = {
+  furious: {
+    name: 'FURIOUS', color: '#ff4020',
+    desc: 'Lashes out without orders.',
+    barks: ['EVERYONE ON THIS GRID IS AN IDIOT!', 'I AM GOING FOR THE GAP. ALL GAPS. EVERY GAP.', 'NO RADIO. ONLY RAGE.'],
+  },
+  paranoid: {
+    name: 'PARANOID', color: '#b86aff',
+    desc: 'Trusts no one. Especially the pit wall.',
+    barks: ['The tyres are LISTENING.', 'Why is MY name on the pit board?? WHO WROTE IT??', 'The stewards have a file on me. I have SEEN it.'],
+  },
+  defeatist: {
+    name: 'DEFEATIST', color: '#6a8a9a',
+    desc: 'Has mentally already retired the car.',
+    barks: ['We were never winning this. Or anything.', 'Just box me. Box me forever.', 'P-whatever. It does not matter. Nothing matters.'],
+  },
+};
+
+export const FLOW_STATE = {
+  name: 'FLOW STATE', color: '#ffd700',
+  barks: ['I AM ONE WITH THE RACING LINE.', 'Time has gone soft and purple. I can see every apex at once.', 'Is this... the perfect lap?'],
+};
+
+export const CORNERS = [
+  {
+    name: 'EAU ROUGE OF ANGUISH',
+    intro: 'The road plunges and rises like a sob. Flat out, or a coward\'s lift? The corner remembers everyone who hesitated.',
+    choices: [
+      { label: 'Lift and coast', desc: 'Dignity intact. Mostly.',
+        resolve: () => ({ text: 'You lift. The corner sneers, but the car survives. The crew exhales as one.', tiltAll: -8 }) },
+      { label: 'Half-commit', desc: 'A gamble: medium risk, medium glory.',
+        resolve: (rng) => rng() < 0.6
+          ? { text: 'Clean through! The crew howls with joy. The telemetry blushes.', tiltAll: -14, buffAll: 'drs' }
+          : { text: 'A wobble at the crest. The barrier breathes on your gearbox. Everyone screams in harmony.', dmgAll: 4, tiltAll: 10 } },
+      { label: 'FLAT OUT', desc: 'Maximum risk. The corner respects only madness.',
+        resolve: (rng) => rng() < 0.45
+          ? { text: 'FLAT. OUT. PERFECTION. Somewhere, 1997 nods in approval. A trinket gleams in the runoff.', tiltAll: -20, trinket: true }
+          : { text: 'The corner collects its toll. The car pirouettes through the gravel like a doomed ballerina.', dmgAll: 7, tiltAll: 16 } },
+    ],
+  },
+  {
+    name: 'THE HAIRPIN OF DIMINISHING RETURNS',
+    intro: 'The slowest corner in racing. A parking lot with delusions. Overtaking here is technically possible, like most bad ideas.',
+    choices: [
+      { label: 'Queue politely', desc: 'Follow the line. Lose nothing. Gain nothing.',
+        resolve: () => ({ text: 'You wait your turn like a civilized ghost. The crew uses the time to argue about lunch.', tiltAll: -6 }) },
+      { label: 'Divebomb the inside', desc: 'It worked once for someone, probably.',
+        resolve: (rng) => rng() < 0.55
+          ? { text: 'IT STICKS! An overtake so rude the marshals applaud. The crew levitates briefly.', tiltAll: -16, buffAll: 'drs' }
+          : { text: 'You arrive at the apex. So does everyone else. There is a sound like a cymbal made of money.', dmgAll: 5, tiltAll: 12 } },
+      { label: 'Cut across the grass', desc: 'The stewards are watching. They are ALWAYS watching.',
+        resolve: (rng) => rng() < 0.4
+          ? { text: 'The grass forgives. The stewards blink. You gain three positions and a trinket someone dropped.', tiltAll: -10, trinket: true }
+          : { text: 'TRACK LIMITS. The penalty is immediate, spiritual, and itemized.', dmgAll: 4, tiltAll: 15 } },
+    ],
+  },
+  {
+    name: 'CHICANE OF BUREAUCRACY',
+    intro: 'Left, right, left, FORM 27-B. The chicane was designed by a committee that hated both speed and joy.',
+    choices: [
+      { label: 'Take the sausage kerb', desc: 'The kerb launches cars. And careers.',
+        resolve: (rng) => rng() < 0.5
+          ? { text: 'You skim the sausage with surgical disdain. The car barely notices. Beautiful.', tiltAll: -12, buffAll: 'drs' }
+          : { text: 'The sausage kerb performs its only function: violence. The car briefly becomes an aircraft.', dmgAll: 6, tiltAll: 10 } },
+      { label: 'File the proper paperwork', desc: 'Take it slow, by the book.',
+        resolve: () => ({ text: 'You navigate the chicane in full regulatory compliance. The Strategist sheds a single proud tear.', tiltAll: -9 }) },
+      { label: 'Ignore the chicane entirely', desc: 'Straight through. The racing line of the damned.',
+        resolve: (rng) => rng() < 0.35
+          ? { text: 'You simply... do not turn. The universe, stunned by the audacity, awards you a trinket.', tiltAll: -15, trinket: true }
+          : { text: 'Bollards. So many bollards. Each one files a separate incident report against your floor.', dmgAll: 8, tiltAll: 12 } },
+    ],
+  },
+];
 
 export const MYSTERY_EVENTS = [
   {
@@ -270,6 +411,13 @@ export const ROUTE_NODES = {
   mystery: [
     { icon: '?', title: 'Unscheduled Stop', flavor: 'Something odd by the roadside. Probably fine. Probably.' },
     { icon: '?', title: 'Strange Lights Ahead', flavor: 'Not the podium kind. The other kind.' },
+  ],
+  corner: [
+    { icon: '⟳', title: 'A Named Corner', flavor: 'Corners with names have opinions. And body counts.' },
+    { icon: '⟳', title: 'The Racing Line Narrows', flavor: 'Commit, lift, or improvise. The wall is taking notes.' },
+  ],
+  elite: [
+    { icon: '⚔', title: 'ELITE: Hostile Telemetry', flavor: 'Something fast and furious ahead. Purple sectors. Black intent.' },
   ],
   pit: [
     { icon: '⛽', title: 'Pit Lane Sanctuary', flavor: 'Warm garages. Working air guns. Brief, beautiful peace.' },
