@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DARKEST GRAND PRIX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- 3D overworld -->
+  <canvas id="world"></canvas>
+  <div id="vignette"></div>
+  <div id="grain"></div>
+
+  <!-- persistent HUD -->
+  <div id="hud" class="hidden">
+    <div id="party-strip"></div>
+    <div id="run-info">
+      <div class="run-leg">LEG <span id="leg-num">1</span> / 6</div>
+      <div class="run-flavor" id="run-flavor">Somewhere between Monza and Damnation</div>
+    </div>
+  </div>
+
+  <!-- narrator bar -->
+  <div id="narrator" class="hidden">
+    <div class="narrator-ornament">❦</div>
+    <div id="narrator-text"></div>
+  </div>
+
+  <!-- route choice -->
+  <div id="choice-modal" class="modal hidden">
+    <h2 class="modal-title">The Road Forks, As Roads Do</h2>
+    <div id="choice-cards"></div>
+  </div>
+
+  <!-- mystery / pit event -->
+  <div id="event-modal" class="modal hidden">
+    <h2 class="modal-title" id="event-title"></h2>
+    <p id="event-text" class="event-text"></p>
+    <div id="event-options"></div>
+  </div>
+
+  <!-- 2D battle -->
+  <div id="battle" class="hidden">
+    <div id="battle-banner"></div>
+    <div id="arena">
+      <div id="hero-row" class="combat-row"></div>
+      <div id="vs-divider"></div>
+      <div id="enemy-row" class="combat-row"></div>
+    </div>
+    <div id="battle-bottom">
+      <div id="turn-label"></div>
+      <div id="ability-bar"></div>
+    </div>
+  </div>
+
+  <!-- title screen -->
+  <div id="title">
+    <div class="title-flag left"></div>
+    <div class="title-flag right"></div>
+    <h1 class="game-title"><span>DARKEST</span><span class="gp">GRAND&nbsp;PRIX</span></h1>
+    <p class="tagline">Ruin has come to our paddock.</p>
+    <button id="btn-start" class="big-btn">BEGIN THE SEASON</button>
+    <button id="btn-mute" class="mute-btn">SOUND: ON</button>
+    <p class="title-foot">A roguelike of speed, despair, and questionable strategy calls</p>
+  </div>
+
+  <!-- roster intro -->
+  <div id="roster" class="hidden">
+    <h2 class="modal-title">Your Doomed Crew</h2>
+    <div id="roster-cards"></div>
+    <button id="btn-race" class="big-btn">LIGHTS OUT</button>
+  </div>
+
+  <!-- end screen -->
+  <div id="end" class="hidden">
+    <h1 id="end-title" class="game-title"></h1>
+    <p id="end-text" class="tagline"></p>
+    <button id="btn-again" class="big-btn">RACE AGAIN</button>
+  </div>
+
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
